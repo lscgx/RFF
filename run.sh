@@ -37,7 +37,7 @@ python main.py \
 --resume [pre-trained model dir] \
 --data_dir [dataset dir] \
 --dataset ImageNet \
---compress_rate [0.]+[0.21]*7 \
+--compress_rate [0.]+[0.1]*2+[0.1]*2+[0.3]+[0.1]*2+[0.3]*2+[0.1]*2+[0.3]*3+[0.1]*2+[0.3]*2+[0.1]*2+[0.3]*2+[0.1]*2 \
 --num_workers 8 \
 --batch_size 128 \
 --epochs 1 \
@@ -52,7 +52,7 @@ python main.py \
 --from_scratch True \
 --resume final_pruned_model/mobilenet_v2_1.pt \
 --num_workers 8 \
---epochs 150 \
+--epochs 200 \
 --lr 0.01 \
 --lr_decay_step cos \
 --batch_size 128 \

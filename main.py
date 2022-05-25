@@ -210,6 +210,7 @@ def validate(epoch,model,cov_id,testloader,criterion,save = True):
 	with torch.no_grad():
 		since = time.time()
 		for i, data in enumerate(testloader, 0):
+
 			# if i > 1 : break
 
 			inputs, labels = data
@@ -399,22 +400,27 @@ def iter_mobilenet_v2():
 
 	cfg = model.interverted_residual_setting
 	n_blocknum = [0,1,2,3,4,3,3,1]
-	_compress_rate = [0]
-	IR_output = [32]
+	IR_output = [32]  # num of output channel
 	IR_expand = [1]
+	IR_cprate_id = [0] # skip branch id
+	IR_2th_cprate = [] # cprate*18
 	sequence_id = [0] #sequence_last_block
 	for i in range(1,7+1):
-		_compress_rate += [compress_rate[i]] * n_blocknum[i]
 		IR_output += [cfg[i-1][1]] * n_blocknum[i]
 		IR_expand += [cfg[i-1][0]] * n_blocknum[i]
 		sequence_id += [i] * n_blocknum[i]
+		IR_cprate_id += [IR_cprate_id[-1]+n_blocknum[i-1]+1]
+
+	for i,x in enumerate(compress_rate) :
+		if i == 0 or i not in IR_cprate_id:
+			IR_2th_cprate.append(x)
 
 	conv_names = get_conv_names(model)
 	bn_names   = get_bn_names(model)
 	optimizer  = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,weight_decay = args.weight_decay)
 	scheduler  = optim.lr_scheduler.MultiStepLR(optimizer, milestones=lr_decay_step, gamma=0.1)
 
-	ranks.insert(0,'no_pruned')#51 IR-18
+	ranks.insert(0,'no_pruned') #51 IR-18
 	_id = 50
 	is_sequence_last = -1 # 
 	sequence_last_rank = None 
@@ -431,7 +437,7 @@ def iter_mobilenet_v2():
 			logger.info('loading checkpoint:' + "pruned_checkpoint/"+args.arch+"_cov" + str(IR_id+1) + '.pt')
 			model.load_state_dict(pruned_checkpoint['state_dict'])
 
-		# acc1,_ = validate(0,model,0,testloader,criterion,save = False)
+		# ori_acc1,_ = validate(0,model,0,testloader,criterion,save = False)
 
 		for cov_id in range(3,0,-1):
 			if IR_id == 1 and cov_id < 3: break
@@ -454,12 +460,14 @@ def iter_mobilenet_v2():
 				rank = np.argsort(effects_pct)
 				
 				if cov_id == 2:
-					c_output_num = math.ceil(IR_output[IR_id-1] * (1. - _compress_rate[IR_id-1])) * IR_expand[IR_id]  #IR_expand
+					last_output = math.ceil(IR_output[IR_id-1] * (1. - compress_rate[IR_cprate_id[sequence_id[IR_id-1]]])) * IR_expand[IR_id]
+					c_output_num = math.ceil(last_output * (1. - IR_2th_cprate[IR_id]))
 					rank1 = rank[_num-c_output_num:_num] 
 					sequence_2th_rank = rank1
 				else :
 					if sequence_id[IR_id] != is_sequence_last:
-						rank1 = rank[int(_num*_compress_rate[IR_id]):_num] 
+						# print('--->',IR_id,sequence_id[IR_id],IR_cprate_id[sequence_id[IR_id]],compress_rate[IR_cprate_id[sequence_id[IR_id]]])
+						rank1 = rank[int(_num*compress_rate[IR_cprate_id[sequence_id[IR_id]]]):_num] 
 						is_sequence_last = sequence_id[IR_id]
 						sequence_last_rank = rank1
 					else :
@@ -1048,7 +1056,4 @@ if __name__ == '__main__':
 			iter_googlenet()
 		elif args.arch == 'mobilenet_v2':
 			iter_mobilenet_v2()
-
-
-
 

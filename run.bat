@@ -48,7 +48,7 @@ start cmd /c ^
 & [python.exe dir] main.py ^
 --arch mobilenet_v2 ^
 --resume [pre-trained model dir] ^
---compress_rate [0.]+[0.21]*7 ^
+--compress_rate [0.]+[0.1]*2+[0.1]*2+[0.3]+[0.1]*2+[0.3]*2+[0.1]*2+[0.3]*3+[0.1]*2+[0.3]*2+[0.1]*2+[0.3]*2+[0.1]*2 ^
 --num_workers 8 ^
 --epochs 1 ^
 --job_dir [pruned-model save dir] ^

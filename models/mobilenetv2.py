@@ -2,6 +2,7 @@ import torch.nn as nn
 import math
 import pdb
 
+
 def conv_bn(inp, oup, stride):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
@@ -20,13 +21,15 @@ def make_divisible(x, divisible_by=8):
     import numpy as np
     return int(np.ceil(x * 1. / divisible_by) * divisible_by)
 
+
 class InvertedResidual(nn.Module):
-    def __init__(self, inp, oup, stride, expand_ratio):
+    def __init__(self, inp, oup, stride, expand_ratio,hidden_dim=None):
         super(InvertedResidual, self).__init__()
         self.stride = stride
         assert stride in [1, 2]
 
-        hidden_dim = int(inp * expand_ratio)
+        if hidden_dim is None : 
+            hidden_dim = int(inp * expand_ratio)
         self.use_res_connect = self.stride == 1 and inp == oup
 
         if expand_ratio == 1:
@@ -60,6 +63,7 @@ class InvertedResidual(nn.Module):
         else:
             return self.conv(x)
 
+
 class MobileNetV2(nn.Module):
     def __init__(self, compress_rate, n_class=1000, input_size=224, width_mult=1.):
         super(MobileNetV2, self).__init__()
@@ -86,20 +90,27 @@ class MobileNetV2(nn.Module):
         self.last_channel = make_divisible(last_channel * width_mult) if width_mult > 1.0 else last_channel
         self.features = [conv_bn(3, input_channel, 2)]
         # building inverted residual blocks
-        cnt=1
+        _cnt = 1
         for t, c, n, s in interverted_residual_setting:
             output_channel = make_divisible(c * width_mult) if t > 1 else c
             # _output_channel = output_channel
-            output_channel = math.ceil((1-self.compress_rate[cnt])*output_channel)
-            # print('--->',1-self.compress_rate[cnt],output_channel)
+            output_channel = math.ceil((1-self.compress_rate[_cnt])*output_channel)
+            # print(_cnt,n)
+            # print('1--->',self.compress_rate[_cnt])
             # _input_channel = input_channel
+            _cnt += 1
             for i in range(n):
+                # print('2--->',self.compress_rate[_cnt])
+                if t != 1:
+                    hidden_dim = math.ceil(int(input_channel * t)*(1-self.compress_rate[_cnt]))
+                else :
+                    hidden_dim = None
                 if i == 0:
-                    self.features.append(block(input_channel, output_channel, s, expand_ratio=t))
+                    self.features.append(block(input_channel, output_channel, s, expand_ratio=t,hidden_dim=hidden_dim))
                 else:
-                    self.features.append(block(input_channel, output_channel, 1, expand_ratio=t))
+                    self.features.append(block(input_channel, output_channel, 1, expand_ratio=t,hidden_dim=hidden_dim))
                 input_channel = output_channel
-            cnt+=1
+                _cnt += 1
 
         # building last several layers
         self.features.append(conv_1x1_bn(input_channel, self.last_channel))
@@ -135,6 +146,7 @@ class MobileNetV2(nn.Module):
                 n = m.weight.size(1)
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
+
 
 def mobilenet_v2(compress_rate=None,oristate_dict = None,ranks = None):
     model = None 

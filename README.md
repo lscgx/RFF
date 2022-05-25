@@ -1,4 +1,4 @@
-# Rethinking Feature Redundancy in Network Pruning
+# (RFF)
 
 ## Environments
 
@@ -13,11 +13,11 @@ The code has been tested in the following environments:
 
 **CIFAR-10:**
 
-[Vgg-16](https://drive.google.com/open?id=1i3ifLh70y1nb8d4mazNzyC4I27jQcHrE) | [ResNet56](https://drive.google.com/open?id=1f1iSGvYFjSKIvzTko4fXFCbS-8dw556T) | [GoogLeNet](https://drive.google.com/open?id=1rYMazSyMbWwkCGCLvofNKwl58W6mmg5c)
+[Vgg-16] | [ResNet56] | [GoogLeNet]
 
 **ImageNet:**
 
-[ResNet50](https://drive.google.com/open?id=1OYpVB84BMU0y-KU7PdEPhbHwODmFvPbB)
+[ResNet50]
 
 ## Running Code
 
