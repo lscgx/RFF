@@ -1,4 +1,4 @@
-# (RFF)
+# PyTorch Implementation of Rethinking Feature Redundancy in Network Pruning
 
 ## Environments
 
